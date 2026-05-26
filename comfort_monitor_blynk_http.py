@@ -3,12 +3,19 @@ import time
 import requests
 from sense_hat import SenseHat
 
+# Blynk Configuration
 TOKEN = "nblBXZWfDnRMlJeGRbagJH-EsWWg-im0"
 
-# Blynk HTTP API URLs 
+# Thingspeak Configuration
+THINGSPEAK_KEY = "OT18E4861YEN08NG"
+
+# Blynk HTTP API URLs (created due to issues connecting to Blynk)
 BLYNK_TEMP_URL = f"https://blynk.cloud/external/api/update?token={TOKEN}&v0="
 BLYNK_HUM_URL = f"https://blynk.cloud/external/api/update?token={TOKEN}&v1="
 BLYNK_COMFORT_URL = f"https://blynk.cloud/external/api/update?token={TOKEN}&v2="
+
+# Thingspeak URL
+THINGSPEAK_URL = "https://api.thingspeak.com/update"
 
 # Room comfort thresholds
 TEMP_LOW = 18
@@ -22,7 +29,7 @@ sense.clear()
 
 def get_calibrated_temp(): # Compensate for Pi CPU Heat
     raw_temp = sense.get_temperature()
-    calibrated = raw_temp - 10  # Subtract 10°C to compensate
+    calibrated = raw_temp - 11.5  # Subtract 11.5°C to compensate
     return round(calibrated, 1)
 
 def calculate_comfort(temp, humidity):
@@ -78,6 +85,25 @@ def send_to_blynk(temp, humidity, comfort_text):
         print(f"Connection error: {e}")
         return False
 
+def send_to_thingspeak(temp, humidity):
+    try:
+        payload = {
+            'api_key': THINGSPEAK_KEY,
+            'field1': temp,
+            'field2': humidity
+        }
+        response = requests.get(THINGSPEAK_URL, params=payload, timeout=5)
+        if response.status_code == 200:
+            print(f"Sent to ThingSpeak (entry: {response.text})")
+            return True
+        else:
+            print(f"ThingSpeak error: {response.status_code}")
+            return False
+        # Error handling (catches the error and prints it)
+    except Exception as e:
+            print(f"ThingSpeak error: {e}")
+            return False
+
 print("=" * 50)
 print("Room Comfort Monitor")
 print("Sending data every minute...")
@@ -98,14 +124,17 @@ try:
 
         # Send to Blynk
         print(f"\n{time.strftime('%H:%M:%S')}")
-        print(f"   Temperature: {temp}°C")
-        print(f"   Humidity: {humidity}%")
-        print(f"   Comfort: {comfort_text}")
+        print(f"Temperature: {temp}°C")
+        print(f"Humidity: {humidity}%")
+        print(f"Comfort: {comfort_text}")
+
+        # Send to Blynk & ThingSpeak
         send_to_blynk(temp, humidity, comfort_text)
+        send_to_thingspeak(temp, humidity)
 
         time.sleep(60)  # Send every minute
 
 except KeyboardInterrupt:
-    print("\n🛑 Shutting down...")
+    print("\nShutting down...")
     sense.clear()
     print("Goodbye!")

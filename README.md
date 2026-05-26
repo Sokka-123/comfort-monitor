@@ -10,13 +10,7 @@ A Raspberry Pi-based system that monitors temperature and humidity to calculate 
 - Historical data logging to ThingSpeak
 
 ## Architecture
-[Sensor] → [MQTT Broker] → [Web Dashboard] → [ThingSpeak Cloud]
-
-## Setup Instructions
-1. Clone repository
-2. Create virtual environment: `python -m venv .venv`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run: `python comfort_monitor.py`
+Sensor -> MQTT Broker -> Web Dashboard -> ThingSpeak Cloud
 
 ## Hardware Required
 - Raspberry Pi 4 Model B
